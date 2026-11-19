@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="vi"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tạo link ảnh Shopee cho Facebook</title>
+<style>
+:root{--bg:#fff;--fg:#222;--bd:#ccc;--ac:#ee4d2d}
+@media(prefers-color-scheme:dark){:root{--bg:#161616;--fg:#eee;--bd:#444}}
+body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--fg);margin:0;padding:16px;max-width:520px;margin:auto}
+label{display:block;margin:14px 0 4px;font-weight:600}
+input,textarea{width:100%;box-sizing:border-box;padding:12px;font-size:16px;border:1px solid var(--bd);border-radius:10px;background:transparent;color:inherit}
+button{width:100%;margin-top:16px;padding:14px;font-size:17px;font-weight:600;border:0;border-radius:10px;background:var(--ac);color:#fff}
+small{opacity:.7}
+#out{display:none;margin-top:20px}
+#prev{max-width:100%;border-radius:10px;margin-top:10px}
+</style>
+</head><body>
+<h2>Tạo link ảnh Shopee</h2>
+<label>1. Link affiliate Shopee</label>
+<input id="u" inputmode="url" placeholder="https://s.shopee.vn/...">
+<label>2. Ảnh của bạn</label>
+<input id="f" type="file" accept="image/*">
+<input id="i" type="hidden">
+<small id="st">Chọn ảnh từ điện thoại, ảnh sẽ tự tải lên. Nên dùng ảnh ngang.</small>
+<label>Mật khẩu tải ảnh (chỉ nhập một lần)</label>
+<input id="k" type="password" autocomplete="off">
+<label>3. Tiêu đề</label>
+<input id="t" placeholder="Ví dụ: Tai nghe Bluetooth giảm 50%">
+<label>4. Mô tả (không bắt buộc)</label>
+<textarea id="d" rows="2"></textarea>
+<button id="go">Tạo link</button>
+<div id="out">
+  <label>Link để dán lên Facebook</label>
+  <textarea id="res" rows="4" readonly></textarea>
+  <button id="cp">Sao chép link</button>
+  <img id="prev" alt="">
+</div>
+<script>
+const $=id=>document.getElementById(id);
+try{$('k').value=localStorage.getItem('upkey')||'';}catch(e){}
+$('f').onchange=async()=>{
+  const file=$('f').files[0]; if(!file)return;
+  const key=$('k').value.trim();
+  if(!key){alert('Nhập mật khẩu tải ảnh trước');$('f').value='';return;}
+  $('st').textContent='Đang tải ảnh lên...'; $('i').value='';
+  try{
+    const bmp=await createImageBitmap(file);
+    const s=Math.min(1,1200/Math.max(bmp.width,bmp.height));
+    const c=document.createElement('canvas');
+    c.width=Math.round(bmp.width*s); c.height=Math.round(bmp.height*s);
+    c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);
+    const blob=await new Promise(r=>c.toBlob(r,'image/jpeg',0.85));
+    const r=await fetch('/api/upload',{method:'POST',headers:{'content-type':'application/octet-stream','x-type':'image/jpeg','x-key':key},body:blob});
+    const j=await r.json();
+    if(!r.ok)throw new Error(j.error||'Lỗi');
+    $('i').value=j.url; $('st').textContent='Đã tải ảnh lên ✓';
+    try{localStorage.setItem('upkey',key);}catch(e){}
+  }catch(e){$('st').textContent='Lỗi: '+e.message;}
+};
+$('go').onclick=()=>{
+  const u=$('u').value.trim(), i=$('i').value.trim();
+  if(!u||!/^https:\/\//.test(i)){alert('Cần link Shopee và link ảnh bắt đầu bằng https://');return;}
+  const p=new URLSearchParams({u,i,t:$('t').value.trim(),d:$('d').value.trim()});
+  $('res').value=location.origin+'/api/go?'+p.toString();
+  $('prev').src=i;
+  $('out').style.display='block';
+  $('out').scrollIntoView({behavior:'smooth'});
+};
+$('cp').onclick=async()=>{
+  try{await navigator.clipboard.writeText($('res').value);$('cp').textContent='Đã sao chép ✓';}
+  catch(e){$('res').select();document.execCommand('copy');$('cp').textContent='Đã sao chép ✓';}
+  setTimeout(()=>$('cp').textContent='Sao chép link',2000);
+};
+</script>
+</body></html>
