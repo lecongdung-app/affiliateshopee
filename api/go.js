@@ -25,6 +25,7 @@ module.exports = (req, res) => {
   const desc = esc(d || 'Bấm để xem chi tiết và giá trên Shopee.');
   const self = esc('https://' + req.headers.host + req.url);
   const target = esc(u);
+  const isBot = /facebookexternalhit|facebot|meta-externalagent|zalo|twitterbot|telegrambot/i.test(req.headers['user-agent'] || '');
 
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.setHeader('Cache-Control', 'public, s-maxage=3600');
@@ -41,7 +42,6 @@ ${img ? `<meta property="og:image" content="${esc(img)}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">` : ''}
-<meta http-equiv="refresh" content="0;url=${target}">
 <style>
 body{font-family:system-ui,sans-serif;margin:0;padding:24px;text-align:center;color:#222}
 img{max-width:100%;border-radius:12px}
@@ -52,6 +52,6 @@ ${img ? `<img src="${esc(img)}" alt="">` : ''}
 <h2>${title}</h2>
 <p>${desc}</p>
 <a class="b" href="${target}">Xem trên Shopee</a>
-<script>location.replace(${JSON.stringify(u)});</script>
+${isBot ? '' : `<script>location.replace(${JSON.stringify(u)});</script>`}
 </body></html>`);
 };
