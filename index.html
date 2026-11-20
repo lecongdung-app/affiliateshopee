@@ -45,10 +45,17 @@ $('f').onchange=async()=>{
   $('st').textContent='Đang tải ảnh lên...'; $('i').value='';
   try{
     const bmp=await createImageBitmap(file);
-    const s=Math.min(1,1200/Math.max(bmp.width,bmp.height));
-    const c=document.createElement('canvas');
-    c.width=Math.round(bmp.width*s); c.height=Math.round(bmp.height*s);
-    c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);
+    const W=1200,H=630;
+    const c=document.createElement('canvas'); c.width=W; c.height=H;
+    const x=c.getContext('2d');
+    if('filter' in x){
+      const cs=Math.max(W/bmp.width,H/bmp.height);
+      x.filter='blur(28px)';
+      x.drawImage(bmp,(W-bmp.width*cs)/2,(H-bmp.height*cs)/2,bmp.width*cs,bmp.height*cs);
+      x.filter='none';
+    }else{x.fillStyle='#f2f2f2';x.fillRect(0,0,W,H);}
+    const fs=Math.min(W/bmp.width,H/bmp.height);
+    x.drawImage(bmp,(W-bmp.width*fs)/2,(H-bmp.height*fs)/2,bmp.width*fs,bmp.height*fs);
     const blob=await new Promise(r=>c.toBlob(r,'image/jpeg',0.85));
     const r=await fetch('/api/upload',{method:'POST',headers:{'content-type':'application/octet-stream','x-type':'image/jpeg','x-key':key},body:blob});
     const j=await r.json();
