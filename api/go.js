@@ -25,6 +25,8 @@ module.exports = (req, res) => {
   const desc = esc(d || 'Bấm để xem chi tiết và giá trên Shopee.');
   const self = esc('https://' + req.headers.host + req.url);
   const target = esc(u);
+  const W = parseInt(req.query.w, 10), H = parseInt(req.query.h, 10);
+  const dimOk = W >= 200 && W <= 4000 && H >= 200 && H <= 4000;
   const isBot = /facebookexternalhit|facebot|meta-externalagent|zalo|twitterbot|telegrambot/i.test(req.headers['user-agent'] || '');
 
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -39,8 +41,8 @@ module.exports = (req, res) => {
 <meta property="og:description" content="${desc}">
 <meta property="og:url" content="${self}">
 ${img ? `<meta property="og:image" content="${esc(img)}">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
+${dimOk ? `<meta property="og:image:width" content="${W}">
+<meta property="og:image:height" content="${H}">` : ''}
 <meta name="twitter:card" content="summary_large_image">` : ''}
 <style>
 body{font-family:system-ui,sans-serif;margin:0;padding:24px;text-align:center;color:#222}
