@@ -18,7 +18,13 @@ small{opacity:.7}
 <h2>Tạo link ảnh Shopee</h2>
 <label>1. Link affiliate Shopee</label>
 <input id="u" inputmode="url" placeholder="https://s.shopee.vn/...">
-<label>2. Ảnh của bạn</label>
+<label>2. Dạng ảnh</label>
+<select id="sh" style="width:100%;padding:12px;font-size:16px;border:1px solid var(--bd);border-radius:10px;background:transparent;color:inherit">
+  <option value="land">Ảnh ngang (1200×630)</option>
+  <option value="sq">Ảnh vuông (1200×1200)</option>
+  <option value="port">Ảnh dọc (1080×1350)</option>
+</select>
+<label>3. Chọn ảnh</label>
 <input id="f" type="file" accept="image/*">
 <input id="i" type="hidden">
 <small id="st">Chọn ảnh từ điện thoại, ảnh sẽ tự tải lên. Nên dùng ảnh ngang.</small>
@@ -38,6 +44,7 @@ small{opacity:.7}
 <script>
 const $=id=>document.getElementById(id);
 try{$('k').value=localStorage.getItem('upkey')||'';}catch(e){}
+$('sh').onchange=()=>{if($('f').files[0])$('f').onchange();};
 $('f').onchange=async()=>{
   const file=$('f').files[0]; if(!file)return;
   const key=$('k').value.trim();
@@ -45,7 +52,8 @@ $('f').onchange=async()=>{
   $('st').textContent='Đang tải ảnh lên...'; $('i').value='';
   try{
     const bmp=await createImageBitmap(file);
-    const W=1200,H=630;
+    const D={land:[1200,630],sq:[1200,1200],port:[1080,1350]}[$('sh').value];
+    const W=D[0],H=D[1]; $('i').dataset.w=W; $('i').dataset.h=H;
     const c=document.createElement('canvas'); c.width=W; c.height=H;
     const x=c.getContext('2d');
     if('filter' in x){
@@ -67,7 +75,7 @@ $('f').onchange=async()=>{
 $('go').onclick=()=>{
   const u=$('u').value.trim(), i=$('i').value.trim();
   if(!u||!/^https:\/\//.test(i)){alert('Cần link Shopee và link ảnh bắt đầu bằng https://');return;}
-  const p=new URLSearchParams({u,i,t:$('t').value.trim(),d:$('d').value.trim()});
+  const p=new URLSearchParams({u,i,t:$('t').value.trim(),d:$('d').value.trim(),w:$('i').dataset.w||'',h:$('i').dataset.h||''});
   $('res').value=location.origin+'/api/go?'+p.toString();
   $('prev').src=i;
   $('out').style.display='block';
